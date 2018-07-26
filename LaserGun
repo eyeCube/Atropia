@@ -1,0 +1,73 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Gun : MonoBehaviour {
+    
+    public int damage;
+    public float range = 1000f;
+    public float bulletForce = 30f;
+
+    public Camera cam;
+    public ParticleSystem muzzleFlash;
+    public GameObject impactEffect;
+    public LineRenderer lr;
+    ///public GameObject gunModel;
+    ///
+    RaycastHit hit;
+
+    void Start () {
+		
+	}
+	
+	void Update () {
+        Shoot();
+	}
+
+    void Shoot ()
+    {
+        bool madeContact = Physics.Raycast(
+            this.transform.position, cam.transform.forward,
+            out hit, range);
+        lr.SetPosition(0, transform.position);
+        if (madeContact)
+        {
+            lr.SetPosition(1, hit.point);
+        }
+        else
+        {
+            lr.SetPosition(1, transform.position + cam.transform.forward * 1000);
+        }
+        
+        
+        if (Input.GetButtonDown("Fire1"))
+        {
+            // pretty effects
+            muzzleFlash.Play();
+
+            // hitscan
+            if (madeContact)
+            {
+                Debug.Log(hit.transform.name);
+
+                Target target = hit.transform.GetComponent<Target>();
+                if (target != null)
+                // hit target!
+                {
+                    // deal damage
+                    target.TakeDamage(damage);
+
+                    // physics
+                    if (hit.rigidbody != null)
+                    {
+                        hit.rigidbody.AddForce(-hit.normal * bulletForce);
+                    }
+                }
+
+                // particle effects
+                GameObject effect = Instantiate(impactEffect, hit.point, Quaternion.LookRotation(hit.normal));
+                Destroy(effect, 2f);
+            }
+        }
+    }
+}
